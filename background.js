@@ -101,7 +101,39 @@ function waitForElement(tabId, selector) {
 
 }
 
+chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+    if (message.type === "ChatGPTMessage") {
+        return sendmessageToChatGPT(message.message, message.messageType, message.encodingEnabled, message.prompt, message,summarisePrompt, sender.tab.id);
 
+    }
+});
+
+function generateFormattedString() {
+    const characters = '0123456789abcdef';
+    let formattedString = '';
+
+    for (let i = 0; i < 32; i++) {
+        formattedString += characters[Math.floor(Math.random() * characters.length)];
+
+        if (i === 7 || i === 11 || i === 19) {
+            formattedString += '-';
+        }
+    }
+
+    return formattedString;
+
+}
+
+function getLastNonEmptyString(string) {
+    for(let i = strings.length - 1; i >= 0; i--) {
+        if (strings[i]) {
+            return strings[i];
+        }
+    }
+
+    return "";
+
+}
 
 
 
