@@ -52,6 +52,25 @@ const getAccessToken = async (cookieString) => {
     return {accessToken, pfp};
 }
 
+// another function
+function handleTabUpdate(tabId, changeInfo, tab) {
+    if(tab.url.indexof("youtube.com") > -1 && tab.url.indexOf("/watch?v=") > -1) { // check if change has occurred of not
+        if(changeInfo.url) { // check if tab url changed
+            chrome.tabs.query({ active: true }).then((activateTabs) => {
+                if (activateTabs[0].id === tabId) {
+                    waitForElement(tabId, "#above-the-fold > #title").then(() => {
+                        chrome.tabs.sendMessage(tabId, {type: "handleYouTubeChange", url: tab.url});
+                        chrome.runtime.reload();
+                    })
+                }
+            });
+        }
+
+    }
+
+}
+
+chrome.tabs.onUpdated.addListener(handleTabUpdate);
 
 
 
