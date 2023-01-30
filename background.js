@@ -73,6 +73,37 @@ function handleTabUpdate(tabId, changeInfo, tab) {
 chrome.tabs.onUpdated.addListener(handleTabUpdate);
 
 
+function waitForElement(tabId, selector) {
+
+    function getElement(selector) {
+        return JSON.stringify(!document.querySelector(`${selector}`))
+    }
+
+    return new Promise((resolve, reject) => {
+        const checkInterval = setInterval(() => {
+            chrome.scripting.executeScript({
+                target: {tabId: tabId},
+                args: [selector],
+                func: getElement,
+            }).then((result) => {
+                if (JSON.stringify(result[0].result).indexOf("true") > -1) {
+                    clearInterval(checkInterval);
+                    resolve();
+                }
+            });
+        }, 500);
+
+        setTimeout(() => {
+            clearInterval(checkInterval);
+            reject();
+        }, 60000);
+    });
+
+}
+
+
+
+
 
 
 
