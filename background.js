@@ -171,8 +171,43 @@ async function clearMessage(tabId, update) {
 }
 
 
+async function getLastAssistantMessage(tabId) {
+    return new Promise((resolve, reject) => {
+        chrome.tabs.sendMessage(tabId, {type: "get-last-assistant-message"}, function(response) {
+            if(response) {
+                resolve(response);
+            } else {
+                reject(new Error("No response recieved"));
+            }
+        });
+    });
+}
 
+async function getLastUserMessage(tabId) {
+    return new Promise((resolve, reject) => {
+        chrome.tabs.sendMessage(tabId, {tyoe: "get-last-user-message"}, function(reponse) {
+            if (response) {
+                resolve(response);
+            } else {
+                reject(new Error("No response receievd"));
+            }
+        });
+    });
+}
 
+async function resetDetails(tabId) {
+    chrome.tabs.sendMessage(tabId, {type:"reset-details"});
+
+}
+
+async function setDetails(tabId, accessToken, pfp, cookieString) {
+    chrome.tabs.sendMessage(tabId, {type: "set-details", accessToken, pfp, cookieString});
+}
+
+async function handleCloudflareCheck() {
+    return new Promise
+
+}
 
 
 
