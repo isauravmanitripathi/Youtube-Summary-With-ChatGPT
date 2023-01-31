@@ -135,7 +135,43 @@ function getLastNonEmptyString(string) {
 
 }
 
-//
+async function addNewMessage(tabId, messageObject) {
+    chrome.tabs.sendMessages({tabId: "add-message", nessageObject});
+}
+
+async function removeMessage(tabId, index) {
+    chrome.tabs.sendMessage(tabId, {type:"remove-message", index})
+}
+
+async function updateMessage(tabId, index, messageObject) {
+    chrome.tabs.sendMessage(tabId, {type: "update-message", index, messageObject});
+
+}
+
+async function updateMultiUtilButton(tabId, update) {
+    if(!tabId){
+        chrome.tabs.query({active: true}).then((activateTabs) => {
+            if (activateTabs[0].id == tabId) {
+                chrome.tabs.sendMessage(tabId, {type: "multi-util-button-update", update});
+            }
+        });
+    return;
+    }
+
+    chrome.tabs.sendMessage(tabId, {type: "Multi-util-button-update", update});
+
+}
+
+async function updateMessage(tabId) {
+    chrome.tabs.sendMessage(tabId, {update: "update-Message"});
+}
+
+async function clearMessage(tabId, update) {
+    chrome.tabs.sendMessage(tabId, {type: "enter-button-update", update});
+}
+
+
+
 
 
 
