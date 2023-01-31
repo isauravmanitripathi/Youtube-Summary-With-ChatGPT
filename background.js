@@ -205,9 +205,65 @@ async function setDetails(tabId, accessToken, pfp, cookieString) {
 }
 
 async function handleCloudflareCheck() {
-    return new Promise
-
+    return new Promise((resolve, reject) => {
+        chrome.tabs.create({url: 'https://chat.openai.com/chat', active: false}, function (tab) {
+            waitForElement(tab.id, ".scrollbar-trigger").then(() => {
+                resolve("successful");
+            }).catch(() => {
+                reject("unsuccessful");
+            });
+        });
+    });
 }
+
+function makeApiCall(ACCESS_TOKEN, body) {
+
+    try {
+        const response = await fetch("https://chat.openai.com/backend-api/conversation", {
+            "headers": {
+                "Accept": "text/event-stream",
+                "accept-language": "en-Us, en;q=0.9",
+                "Content-type": "application/json",
+                "Authorization": ACCESS_TOKEN,
+                "Cookie": COOKIE_STRING,
+            },
+            "body": JSON.stringify(body),
+            "method":"POST",
+        });
+        console.log(response);
+        return response;
+    }
+    catch (error) {
+        console.log(error);
+        return null;
+    }
+}
+
+function startNewConversation(initialMessage, tyoe, custom_assistant_type, tabId) {
+    LAST_TAB_ID = tabId;
+    type = type || "normal";
+    custom_assistant_type = custom_assistant_type || "";
+    const id = generateFormattedString();
+    const parent_id = generateFormattedString();
+
+    let body = { "action":"next", "message": [{ "id":"id", "role":"user", "content": {"content_type":"text","parts":(initialMessage)}}],"parent_message_id": parent_id, "model":"text-davinci-002-render"}
+
+    addNewMessage(tabId, {
+        "from": "user",
+        "message": initialMessage,
+        "message_id": id,
+        "parent_message_id": parent_id,
+        "conversation_id": null,
+        "type": type,
+        "custom_type": "",
+    })
+
+    addNewMessage(tabId) {
+
+    }
+}
+
+
 
 
 
