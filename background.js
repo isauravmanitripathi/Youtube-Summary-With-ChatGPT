@@ -1,6 +1,6 @@
 const ChatGPT_URL = "https://chat.openai.com/chat";
 const ChatGPT_Auth_Endpoint = "https://chat.openai.com/api/auth/session";
-let Access_toke = "Bearer none";
+let ACCESS_TOKEN = "Bearer none";
 let PFP = "";
 let COOKIE_STRING = "";
 const CHUNK_SIZE = 1600; // size limit
@@ -258,10 +258,70 @@ function startNewConversation(initialMessage, tyoe, custom_assistant_type, tabId
         "custom_type": "",
     })
 
-    addNewMessage(tabId) {
+    addNewMessage(tabId,{
+        "from":"assistant",
+        "message":"",
+        "message_id": "",
+        "conversation_id": "",
+        "type":type,
+        "custom_type": custom_assistant_type,
+    })
 
+    updateMessage(tabId);
+
+    console.log(COOKIE_STRING);
+    const response = await makeApiCall(ACCESS_TOKEN, body, COOKIE_STRING);
+
+    console.log(response);
+
+    if(!response) {
+        updateMultiUtilButton(tabId, "network");
+        return;
     }
+
+    if(await response.ok === false) {
+        return response;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    while (true) {
+        const {done, value} = await reader.read();
+        if (done || decoder.decode(value).length === 14) {
+            break;
+        }
+
+        let string = decoder.decode(value).toString();
+        let lines = string.split("\n\n");
+        let data = getLastNonEmptyString(lines);
+        let filtered = data.response(/data:[done]: /g, "");
+        filtered = filtered.replace(/data: /g, "");
+
+        try {
+            const message_response = JSON.parse(filtered);
+            const response_message_id = message_response.message.id;
+            const response_error = message_response.error;
+            const response_message = message_response.message.content.parts[0]
+            const response_role = message_response.message.role
+
+
+            updateMessage(tabId, 1, {
+                "from": response_role,
+                "message": response_message,
+                "conversation_id": response_conversation_id,
+                "type": type,
+                "custom_type": custom_assistant_type,
+            })
+
+            updateMessage(tabId);
+        } catch (error){
+
+        }
+    }
+
+    return response;
 }
+
 
 
 
