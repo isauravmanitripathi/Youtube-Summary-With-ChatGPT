@@ -322,6 +322,130 @@ function startNewConversation(initialMessage, tyoe, custom_assistant_type, tabId
     return response;
 }
 
+async function continueConversation(message, type, custom_assistant_type, tabId) {
+    LAST_TAB_ID = tabId;
+    type = type || "normal";
+    custom_assistant_type = custom_assistant_type || "";
+    const id = generateFormattedString();
+    let last_user_message
+    let last_assistant_message;
+
+    try {
+        last_user_message = await getLastUserMessage(tabId);
+        last_assistant_message = await getLastAssistantMessage(tabId);
+    } catch (errorRecieved) {
+        const {accessToken, pfp, cookieString, error} = await updateAccessToken(tabId);
+        if(error) {
+            await updateMultiUtilButton(tabId, "cooldown");
+            resetDetails(tabId);
+            clearMessage(tabId);
+            conversation = null;
+            return;
+        }
+
+        clearMessage(tabId);
+        conversation = null;
+        return;
+    }
+
+    const conversation_id = last_assistant_message.conversation_id
+
+    let body = {"action";"next","conversation_id": conversation_id, "message": [{"id":id, "role":"user","content":{"content_type":"text","parts":[message]}}], "parent_message_id": last_assistant_message.message_id, "model":"text-davinci-002-render"}
+
+    addNewMessage(tabId, {
+        "from":"user",
+        "message":message,
+        "message_id": id,
+        "parent_message_id": last_user_message.message_id,
+        "conversation_id": conversation_id,
+        "type": type,
+        "custom_type": ""
+    })
+
+    addNewMessage(tabId, {
+        "from": "assistant",
+        "message": "",
+        "message_id":"",
+        "conversation_id": conversation_id,
+        "type":type
+        "custom_type": custom_assistant_type,
+    })
+
+    updateMessage(tabId);
+
+    const response = await makeApiCall(ACCESS_TOKEN, body, COOKIE_STRING);
+    console.log(response);
+
+    if(!response) {
+        updateMultiUtilButton(tabId,"network");
+        return;
+    }
+    if (await response.ok === false){
+        return response;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    while(true) {
+        const {done, value} = await reader.read();
+        if (done || decoder.decode(value).length === 14) {
+            break;
+        }
+
+        let string = decoder.decode(value).toString();
+        let lines = string.split("\n\n");
+        let data = getLastNonEmptyString(lines);
+        let filtered = data.replace(/data: [DONE]: /g, "");
+        filtered =filtered.replace(/data:/g,"");
+
+        try {
+            const message_response = JSON.parse(filtered);
+            const response_message_id = message_response.message.id;
+            const response_conversation_id = message_response.conversation_id;
+            const response_message = message_response.message.content.parts[0];
+            const response_role = message_response.message.role
+
+            updateMessage(tabId, 1, {
+                "from": response_role,
+                "message": response_message,
+                "message_id": response_message_id,
+                "conversation_id": conversation_id,
+                "type":type,
+                "custom_type": custom_assistant_type,
+            });
+
+            updateMessage(tabId);
+
+        } catch (error) {
+
+        }
+    }
+
+    return response;
+
+    sync function updateAccessToken(tabId){
+        const cookieArray() {
+            return new Promise((resolve, reject) => {
+                chrome.cookie.getAll({url: "https://chat.openai.com/chat"}, async function (cookie) {
+                    for (const cookie of cookies) {
+                        switch (cookie.name) {
+                            case "cf_clearance":
+                                cookieArray["cf_clearance"] = cookie.value;
+                                break;
+                            case "intercom-session-dgkjq2bp'":
+                                cookieArray["intercom-session-dgkjq2bp'"] = cookie.value;
+                                break;
+                            case
+
+                        }
+                    }
+                })
+            })
+        }
+    }
+
+}
 
 
 
